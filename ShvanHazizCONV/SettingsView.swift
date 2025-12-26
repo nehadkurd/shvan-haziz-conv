@@ -20,13 +20,13 @@ struct SettingsView: View {
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
 
-                        Text("Local conversions work without internet. DOC/DOCX/ODT/PAGES require an online endpoint.")
+                        Text("Local conversions work without internet. DOC/DOCX/ODT/PAGES require online endpoint.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
 
                     Section("Re-sign friendly") {
-                        Text("This build uses a neutral bundle id so anyone can re-sign with their own certificate/profile (or eSign/kSign). Re-signers must set a bundle id that matches their provisioning profile.")
+                        Text("This build uses a neutral bundle id. Re-signers must set a bundle id that matches their provisioning profile (or wildcard).")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
