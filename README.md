@@ -1,7 +1,16 @@
 # shvan haziz CONV
 
-Netflix-style dark UI converter.
-- Local conversions: txt/md/rtf -> pdf, txt <-> rtf, txt -> md
-- Online conversions: optional (endpoint in Settings)
+Netflix-style dark UI converter (re-sign friendly).
 
-Re-sign friendly: neutral bundle id + minimal entitlements required.
+Local conversions:
+- TXT/MD/RTF -> PDF (UIKit PDF renderer)
+- RTF -> TXT
+- TXT/MD -> RTF
+- TXT -> MD
+
+Online conversions (optional):
+- DOC/DOCX/ODT/PAGES and anything else via your endpoint in Settings.
+
+Build:
+- GitHub Actions builds UNSIGNED IPA artifact.
+- You (or anyone) re-signs with their own certificate/profile.
