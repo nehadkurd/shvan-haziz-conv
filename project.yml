@@ -8,6 +8,7 @@ settings:
   base:
     PRODUCT_BUNDLE_IDENTIFIER: com.example.shvanhazizconv
     INFOPLIST_FILE: ShvanHazizCONV/Info.plist
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     SWIFT_VERSION: "5.8"
     SWIFT_OPTIMIZATION_LEVEL: "-Onone"
 
