@@ -12,10 +12,10 @@ enum OnlineConverterError: LocalizedError {
     }
 }
 
-/// Generic server contract:
+/// Generic contract:
 /// POST {endpoint}
 /// - optional header: Authorization: Bearer <apiKey>
-/// - multipart fields: file (binary), output (e.g. "pdf","docx")
+/// - multipart: file, output (e.g. "docx")
 /// Response: binary output file
 struct OnlineConverter {
     static func convert(endpoint: String, apiKey: String, inputURL: URL, inputData: Data, outputExt: String) async throws -> URL {
@@ -52,9 +52,7 @@ struct OnlineConverter {
         req.httpBody = body
 
         let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse else {
-            throw OnlineConverterError.serverError("No HTTP response.")
-        }
+        guard let http = resp as? HTTPURLResponse else { throw OnlineConverterError.serverError("No HTTP response.") }
         guard (200...299).contains(http.statusCode) else {
             let msg = String(data: data, encoding: .utf8) ?? "HTTP \(http.statusCode)"
             throw OnlineConverterError.serverError(msg)
