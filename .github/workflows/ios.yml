@@ -1,4 +1,4 @@
-name: Build IPA
+name: Build IPA (Unsigned)
 
 on:
   workflow_dispatch:
@@ -6,31 +6,51 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Build iOS App
+      - name: Install XcodeGen
         run: |
+          brew update
+          brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          xcodegen generate --spec project.yml
+
+      - name: Build iOS app (unsigned)
+        run: |
+          mkdir -p build
           xcodebuild \
             -project ShvanHazizCONV.xcodeproj \
             -scheme ShvanHazizCONV \
             -sdk iphoneos \
             -configuration Release \
-            -archivePath build/ShvanHazizCONV.xcarchive \
+            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
-            archive
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
 
-      - name: Export IPA
+      - name: Package unsigned IPA
         run: |
-          mkdir -p build/export
-          xcodebuild -exportArchive \
-            -archivePath build/ShvanHazizCONV.xcarchive \
-            -exportPath build/export \
-            -exportOptionsPlist /dev/null \
-            CODE_SIGNING_ALLOWED=NO
+          set -e
+          APP_PATH=$(find build/DerivedData -type d -name "*.app" | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found in DerivedData"
+            exit 1
+          fi
+          echo "Found app at: $APP_PATH"
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          cd Payload
+          cd ..
+          /usr/bin/zip -r ShvanHazizCONV.ipa Payload
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: ShvanHazizCONV-IPA
-          path: build/export
+          path: ShvanHazizCONV.ipa
