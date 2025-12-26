@@ -6,20 +6,29 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Build Archive (unsigned)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+      - name: Build Swift Package
+        run: |
+          swift build
+
+      - name: Create Xcode archive
         run: |
           xcodebuild \
             -scheme ShvanHazizCONV \
             -configuration Release \
-            -archivePath $PWD/build/ShvanHazizCONV.xcarchive \
             -destination 'generic/platform=iOS' \
-            clean archive \
-            CODE_SIGNING_ALLOWED=NO
+            -archivePath build/ShvanHazizCONV.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
 
-      - name: Export IPA (unsigned)
+      - name: Export IPA
         run: |
           mkdir -p build/export
           cat > ExportOptions.plist <<'PLIST'
@@ -35,12 +44,12 @@ jobs:
           PLIST
 
           xcodebuild -exportArchive \
-            -archivePath $PWD/build/ShvanHazizCONV.xcarchive \
-            -exportPath $PWD/build/export \
+            -archivePath build/ShvanHazizCONV.xcarchive \
+            -exportPath build/export \
             -exportOptionsPlist ExportOptions.plist \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Upload IPA artifact
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
           name: ShvanHazizCONV-IPA
