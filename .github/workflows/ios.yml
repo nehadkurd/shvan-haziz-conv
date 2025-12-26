@@ -1,0 +1,47 @@
+name: Build IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Archive (unsigned)
+        run: |
+          xcodebuild \
+            -scheme ShvanHazizCONV \
+            -configuration Release \
+            -archivePath $PWD/build/ShvanHazizCONV.xcarchive \
+            -destination 'generic/platform=iOS' \
+            clean archive \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export IPA (unsigned)
+        run: |
+          mkdir -p build/export
+          cat > ExportOptions.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>development</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>compileBitcode</key><false/>
+          </dict>
+          </plist>
+          PLIST
+
+          xcodebuild -exportArchive \
+            -archivePath $PWD/build/ShvanHazizCONV.xcarchive \
+            -exportPath $PWD/build/export \
+            -exportOptionsPlist ExportOptions.plist \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShvanHazizCONV-IPA
+          path: build/export/*.ipa
