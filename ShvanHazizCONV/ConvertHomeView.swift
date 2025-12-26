@@ -1,12 +1,11 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct ConvertHomeView: View {
     @AppStorage("converter.endpoint") private var endpoint: String = ""
     @AppStorage("converter.apikey") private var apiKey: String = ""
 
     @State private var showPicker = false
-    @State private var pickedFile: PickedFile?
+    @State private var picked: PickedFile?
     @State private var target: OutputFormat = .pdf
 
     @State private var status: String = "Pick a file to start."
@@ -24,13 +23,12 @@ struct ConvertHomeView: View {
                 ScrollView {
                     VStack(spacing: 14) {
                         hero
-
-                        chooseFileCard
-                        formatCard
+                        chooseCard
+                        outputCard
                         actionCard
 
-                        if let outputURL {
-                            resultCard(url: outputURL)
+                        if let url = outputURL {
+                            resultCard(url)
                         }
 
                         Spacer(minLength: 20)
@@ -42,9 +40,7 @@ struct ConvertHomeView: View {
             .navigationTitle("Convert")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showPicker = true
-                    } label: {
+                    Button { showPicker = true } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 16, weight: .bold))
                     }
@@ -53,7 +49,7 @@ struct ConvertHomeView: View {
             .sheet(isPresented: $showPicker) {
                 DocumentPicker { url in
                     if let url {
-                        pickedFile = PickedFile(url: url)
+                        picked = PickedFile(url: url)
                         status = "Selected: \(url.lastPathComponent)"
                         outputURL = nil
                     } else {
@@ -62,8 +58,8 @@ struct ConvertHomeView: View {
                 }
             }
             .sheet(isPresented: $showShare) {
-                if let shareItem {
-                    ShareSheet(items: [shareItem])
+                if let item = shareItem {
+                    ShareSheet(items: [item])
                 }
             }
         }
@@ -98,27 +94,24 @@ struct ConvertHomeView: View {
                 .font(.footnote)
                 .foregroundStyle(AppTheme.muted2)
         }
-        .neonCard()
+        .netflixCard()
     }
 
-    private var chooseFileCard: some View {
+    private var chooseCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Choose file")
-                .font(.system(size: 16, weight: .bold))
+            Text("Choose file").font(.system(size: 16, weight: .bold))
 
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(pickedFile?.url.lastPathComponent ?? "No file selected")
+                    Text(picked?.url.lastPathComponent ?? "No file selected")
                         .lineLimit(1)
                         .font(.system(size: 14, weight: .semibold))
-                    Text(pickedFile?.friendlyType ?? "—")
+                    Text(picked?.friendlyType ?? "—")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(AppTheme.muted2)
                 }
                 Spacer()
-                Button {
-                    showPicker = true
-                } label: {
+                Button { showPicker = true } label: {
                     Text("Upload")
                         .font(.system(size: 14, weight: .bold))
                         .padding(.horizontal, 14)
@@ -127,14 +120,12 @@ struct ConvertHomeView: View {
                 .buttonStyle(.borderedProminent)
             }
         }
-        .neonCard()
+        .netflixCard()
     }
 
-    private var formatCard: some View {
+    private var outputCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Output format")
-                .font(.system(size: 16, weight: .bold))
-
+            Text("Output format").font(.system(size: 16, weight: .bold))
             Picker("Output", selection: $target) {
                 ForEach(OutputFormat.allCases) { f in
                     Text(f.label).tag(f)
@@ -146,17 +137,14 @@ struct ConvertHomeView: View {
                 .font(.footnote)
                 .foregroundStyle(AppTheme.muted2)
         }
-        .neonCard()
+        .netflixCard()
     }
 
     private var actionCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Convert")
-                .font(.system(size: 16, weight: .bold))
+            Text("Convert").font(.system(size: 16, weight: .bold))
 
-            Text(status)
-                .font(.footnote)
-                .foregroundStyle(AppTheme.muted2)
+            Text(status).font(.footnote).foregroundStyle(AppTheme.muted2)
 
             Button {
                 Task { await convertNow() }
@@ -170,19 +158,15 @@ struct ConvertHomeView: View {
                 .padding(.vertical, 10)
             }
             .buttonStyle(.borderedProminent)
-            .disabled(working || pickedFile == nil)
+            .disabled(working || picked == nil)
         }
-        .neonCard()
+        .netflixCard()
     }
 
-    private func resultCard(url: URL) -> some View {
+    private func resultCard(_ url: URL) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Result")
-                .font(.system(size: 16, weight: .bold))
-
-            Text(url.lastPathComponent)
-                .font(.footnote)
-                .foregroundStyle(AppTheme.muted2)
+            Text("Result").font(.system(size: 16, weight: .bold))
+            Text(url.lastPathComponent).font(.footnote).foregroundStyle(AppTheme.muted2)
 
             HStack {
                 Button("Share") {
@@ -200,44 +184,34 @@ struct ConvertHomeView: View {
                 .buttonStyle(.borderedProminent)
             }
         }
-        .neonCard()
+        .netflixCard()
     }
 
     private func convertNow() async {
-        guard let pickedFile else { return }
+        guard let picked else { return }
         working = true
         defer { working = false }
 
         do {
-            status = "Reading file..."
-            let data = try Data(contentsOf: pickedFile.url)
+            status = "Reading..."
+            let data = try Data(contentsOf: picked.url)
 
             status = "Converting..."
-            if let localOut = try LocalConverter.convert(
-                inputURL: pickedFile.url,
-                inputData: data,
-                to: target
-            ) {
+            if let localOut = try LocalConverter.convert(inputURL: picked.url, inputData: data, to: target) {
                 outputURL = localOut
                 status = "Done (local)."
                 return
             }
 
-            // needs online
+            // needs online endpoint
             let ep = endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
             if ep.isEmpty {
-                status = "Needs online endpoint. Set it in Settings."
+                status = "Needs online endpoint (Settings)."
                 return
             }
 
             status = "Uploading..."
-            let out = try await OnlineConverter.convert(
-                endpoint: ep,
-                apiKey: apiKey,
-                inputURL: pickedFile.url,
-                inputData: data,
-                outputExt: target.fileExtension
-            )
+            let out = try await OnlineConverter.convert(endpoint: ep, apiKey: apiKey, inputURL: picked.url, inputData: data, outputExt: target.fileExtension)
             outputURL = out
             status = "Done (online)."
         } catch {
