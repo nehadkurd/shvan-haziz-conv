@@ -1,6 +1,7 @@
 # shvan haziz CONV
 
-A simple iOS converter app.
+Netflix-style dark UI converter.
+- Local conversions: txt/md/rtf -> pdf, txt <-> rtf, txt -> md
+- Online conversions: optional (endpoint in Settings)
 
-- Local conversions (offline): txt/md/rtf → pdf, txt ↔ rtf, txt ↔ md
-- Online conversions (optional): pdf/doc/docx/odt/pages and more using your converter endpoint.
+Re-sign friendly: neutral bundle id + minimal entitlements required.
