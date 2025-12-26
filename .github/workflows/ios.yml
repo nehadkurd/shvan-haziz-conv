@@ -1,1 +1,44 @@
-<PASTE ios.yml CONTENT HERE>
+name: Build IPA (Unsigned)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen
+
+      - name: Build archive
+        run: |
+          xcodebuild \
+            -project ShvanHazizCONV.xcodeproj \
+            -scheme ShvanHazizCONV \
+            -sdk iphoneos \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/ShvanHazizCONV.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
+
+      - name: Create IPA
+        run: |
+          mkdir Payload
+          cp -R build/ShvanHazizCONV.xcarchive/Products/Applications/ShvanHazizCONV.app Payload/
+          zip -r ShvanHazizCONV.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShvanHazizCONV-IPA
+          path: ShvanHazizCONV.ipa
