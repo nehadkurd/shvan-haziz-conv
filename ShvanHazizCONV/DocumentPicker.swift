@@ -5,7 +5,9 @@ struct DocumentPicker: UIViewControllerRepresentable {
     var onPick: (URL?) -> Void
 
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let types: [UTType] = [.data, .item, .content, .pdf, .plainText, .rtf]
+        let types: [UTType] = [
+            .data, .item, .content, .pdf, .plainText, .rtf
+        ]
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: true)
         picker.allowsMultipleSelection = false
         picker.delegate = context.coordinator
