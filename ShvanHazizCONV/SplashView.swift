@@ -16,7 +16,7 @@ struct SplashView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 18) {
+            VStack(spacing: 16) {
                 Image("AppLogo")
                     .resizable()
                     .scaledToFit()
@@ -26,7 +26,7 @@ struct SplashView: View {
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
                             .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
-                    .shadow(color: .black.opacity(0.5), radius: 18, y: 10)
+                    .shadow(color: .black.opacity(0.55), radius: 18, y: 10)
                     .scaleEffect(pulse ? 1.03 : 0.98)
                     .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: pulse)
 
