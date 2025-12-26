@@ -1,34 +1,41 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Binding var endpoint: String
-    @Binding var apiKey: String
+    @AppStorage("converter.endpoint") private var endpoint: String = ""
+    @AppStorage("converter.apikey") private var apiKey: String = ""
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Online Converter (Optional)") {
-                    TextField("Endpoint URL (https://...)", text: $endpoint)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .keyboardType(.URL)
+            ZStack {
+                AppTheme.bg.ignoresSafeArea()
 
-                    SecureField("API Key / Token", text: $apiKey)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
+                Form {
+                    Section("Online Converter (Optional)") {
+                        TextField("Endpoint URL (https://...)", text: $endpoint)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .keyboardType(.URL)
 
-                    Text("Local conversions work without any server. Formats like DOCX/ODT/PAGES require an online converter.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        SecureField("API Key / Token", text: $apiKey)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+
+                        Text("Local conversions work without internet. DOC/DOCX/ODT/PAGES require an online endpoint.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Section("Re-sign friendly") {
+                        Text("This build uses a neutral bundle id so anyone can re-sign with their own certificate/profile (or eSign/kSign). Re-signers must set a bundle id that matches their provisioning profile.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-
-                Section("Bundle ID Note") {
-                    Text("This app uses a neutral bundle id (com.example.shvanhazizconv) so anyone can re-sign the IPA with their own certificate and provisioning profile.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
+                .scrollContentBackground(.hidden)
             }
             .navigationTitle("Settings")
         }
+        .preferredColorScheme(.dark)
+        .tint(AppTheme.accent)
     }
 }
