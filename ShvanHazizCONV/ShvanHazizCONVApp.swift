@@ -4,7 +4,7 @@ import SwiftUI
 struct ShvanHazizCONVApp: App {
     var body: some Scene {
         WindowGroup {
-            AppRoot()
+            AppRootView()
         }
     }
 }
