@@ -5,7 +5,7 @@
   <key>CFBundleName</key>
   <string>shvan haziz CONV</string>
   <key>CFBundleIdentifier</key>
-  <string>com.nehadkurd.shvanhazizconv</string>
+  <string>com.example.shvanhazizconv</string>
   <key>CFBundleVersion</key>
   <string>1</string>
   <key>CFBundleShortVersionString</key>
