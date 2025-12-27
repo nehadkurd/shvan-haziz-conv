@@ -12,7 +12,7 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        
             ZStack {
                 PremiumBackground()
 
@@ -49,7 +49,6 @@ struct HistoryView: View {
                 }
             }
             .ignoresSafeArea(edges: .top)
-        }
         .sheet(isPresented: $showShare) {
             if let shareURL {
                 ShareSheet(url: shareURL)
@@ -78,5 +77,4 @@ struct HistoryView: View {
                 .frame(width: 140)
             }
         }
-    }
 }
