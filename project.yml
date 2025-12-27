@@ -15,10 +15,15 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.neeko.shvanhazizconv
         SWIFT_VERSION: 5.9
+
+        # unsigned build (re-sign friendly)
         CODE_SIGNING_ALLOWED: NO
         CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""
         DEVELOPMENT_TEAM: ""
+
         ENABLE_BITCODE: NO
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
         TARGETED_DEVICE_FAMILY: "1,2"
     info:
       path: ShvanHazizCONV/Info.plist
