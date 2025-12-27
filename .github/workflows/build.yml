@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: macos-14-arm64
+
     steps:
       - uses: actions/checkout@v4
 
@@ -16,23 +17,37 @@ jobs:
         with:
           xcode-version: "16.4"
 
+      - name: Verify Xcode
+        run: |
+          xcode-select -p
+          xcodebuild -version
+
       - name: Install XcodeGen
-        run: brew install xcodegen
+        run: |
+          brew update
+          brew install xcodegen
 
       - name: Generate Project
         run: xcodegen generate
 
-      - name: Build Archive
+      - name: Build archive (unsigned)
         run: |
-          xcodebuild             -project ShvanHazizCONV.xcodeproj             -scheme ShvanHazizCONV             -sdk iphoneos             -destination "generic/platform=iOS"             CODE_SIGNING_ALLOWED=NO             archive             -archivePath build/ShvanHazizCONV.xcarchive
+          set -euo pipefail
+          xcodebuild             -project ShvanHazizCONV.xcodeproj             -scheme ShvanHazizCONV             -configuration Release             -sdk iphoneos             -destination "generic/platform=iOS"             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO             archive             -archivePath build/ShvanHazizCONV.xcarchive
 
-      - name: Package IPA
+      - name: Package IPA (re-sign friendly)
         run: |
+          set -euo pipefail
+          APP="build/ShvanHazizCONV.xcarchive/Products/Applications/ShvanHazizCONV.app"
+          test -d "$APP"
           mkdir -p build/Payload
-          cp -R build/ShvanHazizCONV.xcarchive/Products/Applications/ShvanHazizCONV.app build/Payload/
-          (cd build && zip -qry ShvanHazizCONV.ipa Payload)
+          cp -R "$APP" build/Payload/
+          rm -rf "build/Payload/ShvanHazizCONV.app/_CodeSignature" || true
+          rm -f  "build/Payload/ShvanHazizCONV.app/embedded.mobileprovision" || true
+          (cd build && /usr/bin/zip -qry ShvanHazizCONV-UNSIGNED.ipa Payload)
+          ls -lh build/ShvanHazizCONV-UNSIGNED.ipa
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ShvanHazizCONV-IPA
-          path: build/ShvanHazizCONV.ipa
+          name: ShvanHazizCONV-UNSIGNED
+          path: build/ShvanHazizCONV-UNSIGNED.ipa
