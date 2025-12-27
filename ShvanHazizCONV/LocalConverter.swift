@@ -1,90 +1,74 @@
 import Foundation
+import PDFKit
 import UIKit
+import UniformTypeIdentifiers
 
 struct LocalConverter {
-    static func convert(inputURL: URL, inputData: Data, to out: OutputFormat) throws -> URL? {
-        let ext = inputURL.pathExtension.lowercased()
 
-        func readString() throws -> String? {
-            if ext == "txt" || ext == "md" {
-                return String(data: inputData, encoding: .utf8) ?? String(data: inputData, encoding: .utf16)
-            }
-            if ext == "rtf" {
-                let attr = try NSAttributedString(
-                    data: inputData,
-                    options: [.documentType: NSAttributedString.DocumentType.rtf],
-                    documentAttributes: nil
+    static func canHandle(input: UTType, output: UTType) -> Bool {
+        if input == .pdf && output == .plainText { return true }
+        if input == .plainText && output == .pdf { return true }
+        if input == .rtf && output == .plainText { return true }
+        if input == .plainText && output == .rtf { return true }
+        if input.conforms(to: .image) && output == .pdf { return true }
+        return false
+    }
+
+    static func convert(inputURL: URL, input: UTType, output: UTType) throws -> URL {
+
+        if input == .pdf && output == .plainText {
+            let pdf = PDFDocument(url: inputURL)!
+            let text = (0..<pdf.pageCount)
+                .compactMap { pdf.page(at: $0)?.string }
+                .joined(separator: "\n")
+
+            let out = temp("output.txt")
+            try text.write(to: out, atomically: true, encoding: .utf8)
+            return out
+        }
+
+        if input == .plainText && output == .pdf {
+            let text = try String(contentsOf: inputURL)
+            let out = temp("output.pdf")
+
+            let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 612, height: 792))
+            try renderer.writePDF(to: out) { ctx in
+                ctx.beginPage()
+                text.draw(
+                    in: CGRect(x: 20, y: 20, width: 572, height: 752),
+                    withAttributes: [.font: UIFont.systemFont(ofSize: 14)]
                 )
-                return attr.string
             }
-            return nil
+            return out
         }
 
-        // TXT/MD/RTF -> PDF (UIKit renderer)
-        if out == .pdf {
-            if let s = try readString() {
-                return try makePDF(from: s, suggestedName: inputURL.deletingPathExtension().lastPathComponent + ".pdf")
-            }
-            return nil
-        }
-
-        // RTF -> TXT
-        if out == .txt && ext == "rtf" {
+        if input == .rtf && output == .plainText {
             let attr = try NSAttributedString(
-                data: inputData,
-                options: [.documentType: NSAttributedString.DocumentType.rtf],
+                url: inputURL,
+                options: [:],
                 documentAttributes: nil
             )
-            return try writeTemp(data: Data(attr.string.utf8),
-                                 filename: inputURL.deletingPathExtension().lastPathComponent + ".txt")
+            let out = temp("output.txt")
+            try attr.string.write(to: out, atomically: true, encoding: .utf8)
+            return out
         }
 
-        // TXT/MD -> RTF
-        if out == .rtf && (ext == "txt" || ext == "md") {
-            guard let s = String(data: inputData, encoding: .utf8) ?? String(data: inputData, encoding: .utf16) else { return nil }
-            let attr = NSAttributedString(string: s)
-            let rtf = try attr.data(from: NSRange(location: 0, length: attr.length),
-                                    documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf])
-            return try writeTemp(data: rtf,
-                                 filename: inputURL.deletingPathExtension().lastPathComponent + ".rtf")
+        if input == .plainText && output == .rtf {
+            let text = try String(contentsOf: inputURL)
+            let attr = NSAttributedString(string: text)
+            let data = try attr.data(
+                from: NSRange(location: 0, length: attr.length),
+                documentAttributes: [.documentType: NSAttributedString.DocumentType.rtf]
+            )
+            let out = temp("output.rtf")
+            try data.write(to: out)
+            return out
         }
 
-        // TXT -> MD
-        if out == .md && ext == "txt" {
-            guard let s = String(data: inputData, encoding: .utf8) ?? String(data: inputData, encoding: .utf16) else { return nil }
-            return try writeTemp(data: Data(s.utf8),
-                                 filename: inputURL.deletingPathExtension().lastPathComponent + ".md")
-        }
-
-        return nil
+        throw NSError(domain: "LocalConverter", code: 1)
     }
 
-    private static func makePDF(from text: String, suggestedName: String) throws -> URL {
-        let pageRect = CGRect(x: 0, y: 0, width: 612, height: 792)
-        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
-
-        let data = renderer.pdfData { ctx in
-            ctx.beginPage()
-
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.lineBreakMode = .byWordWrapping
-
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 14),
-                .paragraphStyle: paragraphStyle
-            ]
-
-            (text as NSString).draw(in: pageRect.insetBy(dx: 36, dy: 36), withAttributes: attrs)
-        }
-
-        return try writeTemp(data: data, filename: suggestedName)
-    }
-
-    private static func writeTemp(data: Data, filename: String) throws -> URL {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("shvanhazizconv", isDirectory: true)
-        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let outURL = dir.appendingPathComponent(filename)
-        try data.write(to: outURL, options: .atomic)
-        return outURL
+    private static func temp(_ name: String) -> URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent(name)
     }
 }
