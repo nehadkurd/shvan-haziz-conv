@@ -4,15 +4,18 @@ struct RootView: View {
     @StateObject private var history = HistoryStore()
 
     var body: some View {
-        TabView {
-            HomeView()
-                .environmentObject(history)
-                .tabItem { Label("Convert", systemImage: "sparkles") }
+        GeometryReader { geo in
+            TabView {
+                HomeView(containerSize: geo.size)
+                    .environmentObject(history)
+                    .tabItem { Label("Convert", systemImage: "sparkles") }
 
-            HistoryView()
-                .environmentObject(history)
-                .tabItem { Label("History", systemImage: "clock") }
+                HistoryView(containerSize: geo.size)
+                    .environmentObject(history)
+                    .tabItem { Label("History", systemImage: "clock") }
+            }
+            .tint(.red)
+            .frame(width: geo.size.width, height: geo.size.height)
         }
-        .tint(.red)
     }
 }
