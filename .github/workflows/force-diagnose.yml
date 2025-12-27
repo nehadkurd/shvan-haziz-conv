@@ -1,0 +1,30 @@
+name: FORCE DIAGNOSE IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Print repo tree
+        run: |
+          echo "=== REPO TREE ==="
+          find . -maxdepth 4 -type f
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run XcodeGen (VERBOSE)
+        run: |
+          echo "=== XCODEGEN START ==="
+          xcodegen generate --verbose || exit 1
+          echo "=== AFTER XCODEGEN ==="
+          ls -la
+          test -d ShvanHazizCONV.xcodeproj || exit 2
+
+      - name: STOP HERE (DO NOT BUILD)
+        run: |
+          echo "If you see this, xcodeproj EXISTS"
