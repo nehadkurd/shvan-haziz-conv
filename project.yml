@@ -1,0 +1,30 @@
+name: ShvanHazizCONV
+
+options:
+  bundleIdPrefix: com.neeko
+  deploymentTarget:
+    iOS: "17.0"
+
+targets:
+  ShvanHazizCONV:
+    type: application
+    platform: iOS
+    sources:
+      - path: ShvanHazizCONV
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.neeko.shvanhazizconv
+        SWIFT_VERSION: 5.9
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        DEVELOPMENT_TEAM: ""
+        ENABLE_BITCODE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+    info:
+      path: ShvanHazizCONV/Info.plist
+
+schemes:
+  ShvanHazizCONV:
+    build:
+      targets:
+        ShvanHazizCONV: all
