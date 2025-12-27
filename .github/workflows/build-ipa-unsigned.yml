@@ -10,16 +10,15 @@ jobs:
     runs-on: macos-14-arm64
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Select Xcode 16.4
         shell: bash
         run: |
-          echo "🔍 Listing Xcodes:"
-          ls -1 /Applications | grep -i xcode || true
+          echo "🔍 Xcodes installed:"
+          ls /Applications | grep -i xcode || true
 
-          XCODE_APP="$(ls -d /Applications/Xcode_16.4*.app 2>/dev/null | head -n 1)"
+          XCODE_APP=$(ls -d /Applications/Xcode_16.4*.app 2>/dev/null | head -n 1)
           if [ -z "$XCODE_APP" ]; then
             echo "❌ Xcode 16.4 not found"
             exit 1
@@ -27,34 +26,29 @@ jobs:
 
           sudo xcode-select -s "$XCODE_APP/Contents/Developer"
           xcodebuild -version
-          xcode-select -p
 
       - name: Install XcodeGen
         run: |
           brew update
           brew install xcodegen
 
-      - name: Generate Xcode Project
+      - name: Generate Project
         run: xcodegen generate
 
       - name: Build .app (unsigned)
         run: |
-          set -euo pipefail
-          xcodebuild             -project ShvanHazizCONV.xcodeproj             -scheme ShvanHazizCONV             -configuration Release             -sdk iphoneos             -destination "generic/platform=iOS"             -derivedDataPath build/DerivedData             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO             archive             -archivePath build/ShvanHazizCONV.xcarchive
+          xcodebuild             -project ShvanHazizCONV.xcodeproj             -scheme ShvanHazizCONV             -configuration Release             -sdk iphoneos             -destination "generic/platform=iOS"             CODE_SIGNING_ALLOWED=NO             CODE_SIGNING_REQUIRED=NO             archive             -archivePath build/ShvanHazizCONV.xcarchive
 
-      - name: Package unsigned IPA
+      - name: Package IPA
         run: |
-          APP="build/ShvanHazizCONV.xcarchive/Products/Applications/ShvanHazizCONV.app"
+          APP=build/ShvanHazizCONV.xcarchive/Products/Applications/ShvanHazizCONV.app
           mkdir -p build/Payload
           cp -R "$APP" build/Payload/
-
           rm -rf build/Payload/ShvanHazizCONV.app/_CodeSignature || true
           rm -f build/Payload/ShvanHazizCONV.app/embedded.mobileprovision || true
-
           (cd build && zip -qry ShvanHazizCONV-UNSIGNED.ipa Payload)
 
-      - name: Upload IPA
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: ShvanHazizCONV-UNSIGNED
           path: build/ShvanHazizCONV-UNSIGNED.ipa
