@@ -18,5 +18,13 @@
 
   <key>UIApplicationSupportsIndirectInputEvents</key>
   <true/>
+
+  <key>UIViewControllerBasedStatusBarAppearance</key>
+  <false/>
+  <key>UIStatusBarHidden</key>
+  <true/>
+  <key>UIRequiresFullScreen</key>
+  <true/>
 </dict>
+
 </plist>
