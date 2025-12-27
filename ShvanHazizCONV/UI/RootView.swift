@@ -18,6 +18,5 @@ struct RootView: View {
             .tabItem { Label("History", systemImage: "clock") }
         }
         .tint(.red)
-        .background(Color.clear) // do NOT block window background
     }
 }
