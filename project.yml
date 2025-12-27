@@ -11,6 +11,8 @@ targets:
     platform: iOS
     sources:
       - path: ShvanHazizCONV
+      - path: ShvanHazizCONV/Core
+      - path: ShvanHazizCONV/UI
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.neeko.shvanhazizconv
