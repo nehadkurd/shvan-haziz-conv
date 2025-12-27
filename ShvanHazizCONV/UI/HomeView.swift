@@ -19,7 +19,7 @@ struct HomeView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        
             ZStack {
                 PremiumBackground()
 
@@ -58,7 +58,6 @@ struct HomeView: View {
                 }
             }
             .ignoresSafeArea(edges: .top)
-        }
         .sheet(isPresented: $showPicker) {
             DocumentPicker { url in
                 let d = FileDetector.detect(url: url)
@@ -68,7 +67,6 @@ struct HomeView: View {
                 selectedTarget = targets.first
                 message = note
             }
-        }
         .sheet(isPresented: $showShare) {
             if let outputURL {
                 ShareSheet(url: outputURL)
@@ -231,5 +229,4 @@ struct HomeView: View {
                 }
             }
         }
-    }
 }
