@@ -4,7 +4,11 @@ import SwiftUI
 struct ShvanHazizCONVApp: App {
     var body: some Scene {
         WindowGroup {
-            RootView()
+            ZStack {
+                PremiumBackground()   // 🔥 background at window level
+                RootView()
+            }
+            .ignoresSafeArea()       // 🔥 true fullscreen
         }
     }
 }
