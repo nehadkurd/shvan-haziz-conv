@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct HomeView: View {
+    let containerSize: CGSize
     @EnvironmentObject private var history: HistoryStore
+
     @State private var showPicker = false
     @State private var detected: DetectedFile?
     @State private var targets: [ConversionTarget] = []
@@ -12,57 +14,50 @@ struct HomeView: View {
     @State private var showShare = false
     @State private var message: String?
 
+    private var horizontalPadding: CGFloat {
+        max(16, containerSize.width * 0.05)
+    }
+
     var body: some View {
-        ZStack {
-            PremiumBackground()
+        NavigationStack {
+            ZStack {
+                PremiumBackground()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
 
-                    header
+                        header
+                            .padding(.top, 12)
 
-                    PremiumCard(
-                        title: "Ready when you are",
-                        subtitle: "Import a file — we’ll understand it instantly."
-                    ) {
-                        PrimaryCTAButton(title: "Import File", icon: "plus.circle.fill") {
-                            showPicker = true
+                        importCard
+
+                        if let detected {
+                            detectedCard(detected)
+                            suggestionsCard
                         }
+
+                        if let message {
+                            Text(message)
+                                .font(.footnote)
+                                .foregroundStyle(.white.opacity(0.75))
+                        }
+
+                        if !history.items.isEmpty {
+                            recentHeader
+                            recentCarousel
+                        }
+
+                        Spacer(minLength: 32)
                     }
-                    .padding(.horizontal, 16)
-
-                    if let detected {
-                        detectedCard(detected)
-                            .padding(.horizontal, 16)
-
-                        suggestionsCard
-                            .padding(.horizontal, 16)
-                    }
-
-                    if let message {
-                        Text(message)
-                            .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.75))
-                            .padding(.horizontal, 16)
-                    }
-
-                    if !history.items.isEmpty {
-                        recentHeader
-                            .padding(.horizontal, 16)
-
-                        recentCarousel
-                            .padding(.horizontal, 16)
-                    }
-
-                    Spacer(minLength: 24)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 32)
                 }
-                .padding(.top, 14)
-                .padding(.bottom, 28)
-            }
 
-            if isConverting {
-                convertingOverlay
+                if isConverting {
+                    convertingOverlay
+                }
             }
+            .ignoresSafeArea(edges: .top)
         }
         .sheet(isPresented: $showPicker) {
             DocumentPicker { url in
@@ -84,33 +79,36 @@ struct HomeView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Shvan Haziz CONV")
-                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .font(.system(size: min(36, containerSize.width * 0.09), weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
             Text("Smart. Quiet. Powerful.")
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.75))
         }
-        .padding(.horizontal, 16)
+    }
+
+    private var importCard: some View {
+        PremiumCard(
+            title: "Ready when you are",
+            subtitle: "Import a file — we’ll understand it instantly."
+        ) {
+            PrimaryCTAButton(title: "Import File", icon: "plus.circle.fill") {
+                showPicker = true
+            }
+        }
     }
 
     private func detectedCard(_ d: DetectedFile) -> some View {
         PremiumCard(title: "Detected", subtitle: "We’ve got it.") {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 12) {
-                    Image(systemName: icon(for: d.family))
-                        .font(.system(size: 26))
-                        .foregroundStyle(.white.opacity(0.9))
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(d.fileName)
-                            .font(.subheadline)
-                            .foregroundStyle(.white)
-                            .lineLimit(2)
-                        Text(d.family.rawValue.uppercased())
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.75))
-                    }
-                    Spacer()
-                }
+            VStack(alignment: .leading, spacing: 10) {
+                Text(d.fileName)
+                    .font(.subheadline)
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+
+                Text(d.family.rawValue.uppercased())
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.75))
 
                 Text(note)
                     .font(.footnote)
@@ -121,30 +119,28 @@ struct HomeView: View {
 
     private var suggestionsCard: some View {
         PremiumCard(title: "Suggested conversions", subtitle: "Only what actually works.") {
-
             if targets.isEmpty {
-                Text("No valid conversions for this file yet.")
+                Text("No valid conversions available.")
                     .foregroundStyle(.white.opacity(0.75))
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 14) {
                         ForEach(targets) { t in
                             targetPill(t, selected: t.id == selectedTarget?.id)
                                 .onTapGesture { selectedTarget = t }
                         }
                     }
-                    .padding(.vertical, 2)
                 }
 
                 if let selectedTarget {
-                    if selectedTarget.mode == .secureCloud {
-                        Text("This conversion requires secure cloud processing. (Backend not added yet.)")
-                            .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.75))
-                    } else {
+                    if selectedTarget.mode == .onDevice {
                         SoftButton(title: "Convert Now", icon: "sparkles") {
                             runOnDeviceConversion(selectedTarget)
                         }
+                    } else {
+                        Text("Secure cloud conversion (coming soon).")
+                            .font(.footnote)
+                            .foregroundStyle(.white.opacity(0.75))
                     }
                 }
             }
@@ -153,86 +149,62 @@ struct HomeView: View {
 
     private func targetPill(_ t: ConversionTarget, selected: Bool) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Image(systemName: t.systemIcon)
-                Text(t.title).fontWeight(.semibold)
-            }
-            .foregroundStyle(.white)
-
+            Text(t.title)
+                .fontWeight(.semibold)
             Text(t.subtitle)
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.75))
-
-            Text(t.mode == .onDevice ? "On-device" : "Secure cloud")
-                .font(.caption2)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.white.opacity(0.12))
-                .clipShape(Capsule())
-                .foregroundStyle(.white.opacity(0.85))
         }
-        .padding(12)
-        .frame(width: 180)
-        .background(selected ? Color.white.opacity(0.18) : Color.white.opacity(0.10))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
-
-    private var convertingOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.55).ignoresSafeArea()
-            VStack(spacing: 12) {
-                ProgressView()
-                Text("Converting…")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                Text("Just a moment.")
-                    .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.75))
-            }
-            .padding(18)
-            .background(.ultraThinMaterial.opacity(0.35))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        }
+        .padding(14)
+        .frame(width: max(170, containerSize.width * 0.42))
+        .background(selected ? Color.white.opacity(0.2) : Color.white.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .foregroundStyle(.white)
     }
 
     private var recentHeader: some View {
-        HStack {
-            Text("Recent")
-                .font(.headline)
-                .foregroundStyle(.white)
-            Spacer()
-        }
+        Text("Recent")
+            .font(.headline)
+            .foregroundStyle(.white)
     }
 
     private var recentCarousel: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
                 ForEach(history.items.prefix(10)) { item in
                     VStack(alignment: .leading, spacing: 6) {
                         Text(item.inputName)
                             .font(.subheadline)
-                            .foregroundStyle(.white)
                             .lineLimit(1)
                         Text("\(item.inputFamily.rawValue.uppercased()) → \(item.outputFormat.rawValue.uppercased())")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.75))
-                        Text(item.createdAt.formatted(date: .abbreviated, time: .shortened))
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.65))
                     }
-                    .padding(12)
-                    .frame(width: 220)
-                    .background(Color.white.opacity(0.10))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .padding(14)
+                    .frame(width: max(220, containerSize.width * 0.55))
+                    .background(Color.white.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .foregroundStyle(.white)
                 }
             }
         }
     }
 
+    private var convertingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.6).ignoresSafeArea()
+            ProgressView("Converting…")
+                .padding(20)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .foregroundStyle(.white)
+        }
+    }
+
     private func runOnDeviceConversion(_ target: ConversionTarget) {
-        guard let detected else { return }
-        guard let inputURL = FileDetector.resolveBookmark(detected.inputURLBookmark) else {
-            message = "We couldn’t access the file. Please import again."
+        guard let detected,
+              let inputURL = FileDetector.resolveBookmark(detected.inputURLBookmark) else {
+            message = "Unable to access the file."
             return
         }
 
@@ -241,42 +213,23 @@ struct HomeView: View {
 
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                let out = try OnDeviceConverter.convert(inputURL: inputURL, inputFamily: detected.family, to: target.format)
-
-                let outBookmark = (try? out.bookmarkData(options: .minimalBookmark, includingResourceValuesForKeys: nil, relativeTo: nil)) ?? Data()
-                let historyItem = HistoryItem(
-                    id: UUID().uuidString,
-                    inputName: detected.fileName,
+                let out = try OnDeviceConverter.convert(
+                    inputURL: inputURL,
                     inputFamily: detected.family,
-                    outputFormat: target.format,
-                    outputURLBookmark: outBookmark,
-                    createdAt: Date()
+                    to: target.format
                 )
-
                 DispatchQueue.main.async {
-                    self.isConverting = false
-                    self.outputURL = out
-                    self.showShare = true
-                    self.message = "Conversion complete."
-                    self.history.add(historyItem)
+                    isConverting = false
+                    outputURL = out
+                    showShare = true
+                    message = "Conversion complete."
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.isConverting = false
-                    self.message = "Conversion failed: \(error.localizedDescription)"
+                    isConverting = false
+                    message = error.localizedDescription
                 }
             }
-        }
-    }
-
-    private func icon(for family: FileFamily) -> String {
-        switch family {
-        case .word: return "doc.text.fill"
-        case .powerpoint: return "rectangle.3.group.fill"
-        case .pdf: return "doc.richtext.fill"
-        case .rtf: return "textformat"
-        case .txt: return "doc.plaintext.fill"
-        case .unknown: return "questionmark.folder.fill"
         }
     }
 }
