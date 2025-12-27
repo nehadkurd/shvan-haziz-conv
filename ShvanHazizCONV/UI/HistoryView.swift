@@ -1,49 +1,54 @@
 import SwiftUI
 
 struct HistoryView: View {
+    let containerSize: CGSize
     @EnvironmentObject private var history: HistoryStore
     @State private var shareURL: URL?
     @State private var showShare = false
     @State private var message: String?
 
+    private var horizontalPadding: CGFloat {
+        max(16, containerSize.width * 0.05)
+    }
+
     var body: some View {
-        ZStack {
-            PremiumBackground()
+        NavigationStack {
+            ZStack {
+                PremiumBackground()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("History")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 14)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("History")
+                            .font(.system(size: min(36, containerSize.width * 0.09), weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.top, 14)
 
-                    if history.items.isEmpty {
-                        PremiumCard(title: "Nothing yet", subtitle: "Your conversions will appear here.") {
-                            Text("Start by importing a file.")
-                                .foregroundStyle(.white.opacity(0.75))
-                        }
-                        .padding(.horizontal, 16)
-                    } else {
-                        VStack(spacing: 12) {
-                            ForEach(history.items) { item in
-                                historyCard(item)
-                                    .padding(.horizontal, 16)
+                        if history.items.isEmpty {
+                            PremiumCard(title: "Nothing yet", subtitle: "Your conversions will appear here.") {
+                                Text("Start by importing a file.")
+                                    .foregroundStyle(.white.opacity(0.75))
+                            }
+                        } else {
+                            VStack(spacing: 12) {
+                                ForEach(history.items) { item in
+                                    historyCard(item)
+                                }
                             }
                         }
-                    }
 
-                    if let message {
-                        Text(message)
-                            .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.75))
-                            .padding(.horizontal, 16)
-                    }
+                        if let message {
+                            Text(message)
+                                .font(.footnote)
+                                .foregroundStyle(.white.opacity(0.75))
+                        }
 
-                    Spacer(minLength: 24)
+                        Spacer(minLength: 24)
+                    }
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.bottom, 28)
                 }
-                .padding(.bottom, 28)
             }
+            .ignoresSafeArea(edges: .top)
         }
         .sheet(isPresented: $showShare) {
             if let shareURL {
