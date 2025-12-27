@@ -27,14 +27,11 @@ jobs:
               fi
             fi
           done
-
-          echo "❌ Xcode 16.4 not found on runner"
+          echo "❌ Xcode 16.4 not found"
           exit 1
 
       - name: Install XcodeGen
-        run: |
-          brew update
-          brew install xcodegen
+        run: brew install xcodegen
 
       - name: Generate Project
         run: xcodegen generate
