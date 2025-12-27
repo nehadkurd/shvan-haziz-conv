@@ -12,22 +12,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode 16.4 (version-based)
+            - name: Select Xcode 16.4 (safe)
         shell: bash
         run: |
-          echo "🔍 Searching for Xcode 16.4..."
+          echo "🔍 Detecting Xcode 16.4..."
           for app in /Applications/Xcode*.app; do
             if [ -x "$app/Contents/Developer/usr/bin/xcodebuild" ]; then
-              VERSION=$("$app/Contents/Developer/usr/bin/xcodebuild" -version | head -n 1)
-              echo "Found $app → $VERSION"
-              if echo "$VERSION" | grep -q "Xcode 16.4"; then
+              VER=$("$app/Contents/Developer/usr/bin/xcodebuild" -version | head -n 1)
+              echo "Found $app → $VER"
+              if echo "$VER" | grep -q "Xcode 16.4"; then
                 sudo xcode-select -s "$app/Contents/Developer"
                 xcodebuild -version
                 exit 0
               fi
             fi
           done
-          echo "❌ Xcode 16.4 not found"
+          echo "❌ Xcode 16.4 not found on runner"
           exit 1
 
       - name: Install XcodeGen
