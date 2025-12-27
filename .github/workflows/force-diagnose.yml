@@ -20,7 +20,7 @@ jobs:
       - name: Run XcodeGen (VERBOSE)
         run: |
           echo "=== XCODEGEN START ==="
-          xcodegen generate --verbose || exit 1
+          xcodegen generate || exit 1
           echo "=== AFTER XCODEGEN ==="
           ls -la
           test -d ShvanHazizCONV.xcodeproj || exit 2
